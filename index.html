@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI IPS - Potensi Bencana Alam Indonesia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'islamic-blue': '#0A4275',
+                        'islamic-gold': '#F4B41A',
+                        'islamic-light': '#F0F4F8',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F0F4F8; overflow-x: hidden; }
+        .hidden { display: none !important; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #0A4275; border-radius: 4px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+        .animate-shake { animation: shake 1s; }
+        
+        @keyframes ashFall { 0% { opacity: 0; top: -50px; } 50% { opacity: 1; } 100% { opacity: 0.8; top: 100%; } }
+        .ash-particle { position: absolute; width: 10px; height: 10px; background-color: gray; border-radius: 50%; animation: ashFall 3s linear infinite; }
+
+        #sim-area { position: relative; overflow: hidden; background: linear-gradient(to bottom, #87CEEB 40%, #8B4513 40%); transition: all 1s ease; }
+        .crop { font-size: 2rem; position: absolute; bottom: 10%; transition: all 0.5s; cursor: pointer; }
+        .crop:hover { transform: scale(1.2); }
+        .volcano { font-size: 5rem; position: absolute; bottom: 50%; left: 10%; z-index: 10; }
+        
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        
+        .match-btn-selected { background-color: #EBF8FF !important; border-color: #3B82F6 !important; }
+        .match-btn-correct { background-color: #DCFCE7 !important; border-color: #22C55E !important; color: #166534 !important; opacity: 0.8; cursor: not-allowed; }
+        .match-btn-wrong { background-color: #FEE2E2 !important; border-color: #EF4444 !important; }
+
+        @keyframes marquee {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-marquee {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 25s linear infinite;
+        }
+
+        /* Loader Animation */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #F4B41A; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col relative">
+
+    <!-- Running Text Footer -->
+    <div class="fixed bottom-0 left-0 w-full bg-islamic-blue text-islamic-gold py-2 z-50 overflow-hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)] border-t border-islamic-gold border-opacity-30">
+        <div class="animate-marquee font-semibold tracking-wide md:text-lg text-sm">
+            🎓 Sandi Kurnianto Koniyo, S.Pd - Guru IPS MTs Negeri 2 Kabupaten Gorontalo 🎓
+        </div>
+    </div>
+
+    <!-- Cover Screen -->
+    <div id="screen-cover" class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#041c33] via-islamic-blue to-[#021324] text-white p-6 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-72 h-72 bg-islamic-gold opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl"></div>
+        <div class="absolute bottom-0 right-0 w-96 h-96 bg-blue-400 opacity-10 rounded-full translate-x-1/3 translate-y-1/3 blur-2xl"></div>
+        
+        <div class="z-10 text-center animate-fade-in max-w-2xl bg-[#082b4e]/95 backdrop-blur-md p-8 md:p-10 rounded-3xl border-2 border-islamic-gold shadow-2xl">
+            <span class="inline-block bg-islamic-gold/20 text-islamic-gold font-bold tracking-widest text-xs md:text-sm px-4 py-1.5 rounded-full mb-3 uppercase border border-islamic-gold/40">
+                Media Pembelajaran Interaktif IPS
+            </span>
+            <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-3 leading-tight drop-shadow-md">
+                Potensi Bencana Alam di Indonesia
+            </h1>
+            <p class="text-base md:text-xl mb-8 text-yellow-100 font-medium">
+                Kelas VII - Fase D | Kurikulum Madrasah
+            </p>
+            
+            <div class="bg-[#0c3966] p-4 rounded-2xl mb-8 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto border border-islamic-gold/40 shadow-inner">
+                <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-islamic-gold shadow-lg shrink-0 bg-islamic-blue">
+                    <img src="https://iili.io/ncdpWle.md.jpg" alt="Sandi Kurnianto Koniyo, S.Pd" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/150x150/0A4275/F4B41A?text=SKK'">
+                </div>
+                <div class="text-center sm:text-left">
+                    <p class="text-xs text-yellow-300 uppercase tracking-widest font-semibold">Disusun oleh:</p>
+                    <p class="text-xl font-bold text-islamic-gold drop-shadow-sm">Sandi Kurnianto Koniyo, S.Pd</p>
+                    <p class="text-sm font-medium text-blue-100">Guru IPS MTs Negeri 2 Kabupaten Gorontalo</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button onclick="nav('screen-menu')" class="bg-islamic-gold hover:bg-yellow-400 text-islamic-blue font-black py-4 px-10 rounded-full shadow-xl transform transition hover:scale-105 active:scale-95 text-xl flex items-center justify-center gap-2 border-2 border-yellow-300">
+                    Let's Do It! 🚀
+                </button>
+                <button onclick="openGasModal()" class="bg-blue-900/80 hover:bg-blue-800 text-yellow-300 font-bold py-3 px-6 rounded-full border border-yellow-400/50 text-sm flex items-center justify-center gap-2">
+                    ⚙️ Set Database
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Menu Screen -->
+    <div id="screen-menu" class="hidden min-h-screen bg-islamic-light p-6 md:p-12 pb-24">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 animate-fade-in">
+            <div class="flex items-center gap-3">
+                <img src="https://iili.io/ncdpWle.md.jpg" alt="Foto Pengembang" class="w-12 h-12 rounded-full border-2 border-islamic-gold object-cover shadow-sm shrink-0" onerror="this.src='https://placehold.co/100x100/0A4275/F4B41A?text=SKK'">
+                <div>
+                    <h1 class="text-2xl md:text-4xl font-bold text-islamic-blue">Pilih Petualanganmu 🗺️</h1>
+                    <p class="text-gray-600 text-xs md:text-sm">Mari kita jelajahi kondisi geologis dan bencana di Indonesia.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                <div id="header-student-badge" class="bg-white px-4 py-2 rounded-full shadow-sm border border-islamic-blue/20 text-xs md:text-sm font-bold text-islamic-blue flex items-center gap-2">
+                    <span class="text-base">👤</span>
+                    <span id="badge-text">Siswa: Belum Diisi</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openGasModal()" class="p-2.5 bg-white rounded-full shadow hover:bg-gray-100 text-islamic-blue" title="Pengaturan Database Guru">⚙️</button>
+                    <button onclick="nav('screen-cover')" class="p-2.5 bg-white rounded-full shadow hover:bg-gray-100 text-islamic-blue" title="Ke Halaman Utama">🏠</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Identity Banner / Form Card -->
+        <div class="max-w-5xl mx-auto mb-8 animate-fade-in">
+            <div class="glass-panel p-6 border-l-8 border-islamic-gold bg-gradient-to-r from-blue-900 to-islamic-blue text-white shadow-xl">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-islamic-gold text-islamic-blue w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black shrink-0 shadow-md">
+                            🎓
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-yellow-300">Kolom Identitas Siswa</h3>
+                            <p class="text-blue-100 text-xs md:text-sm">Pastikan Nama dan Kelas sudah diisi sebelum mengerjakan kuis evaluasi.</p>
+                        </div>
+                    </div>
+                    <button onclick="openIdentitasModal()" class="bg-islamic-gold hover:bg-yellow-400 text-islamic-blue font-extrabold px-5 py-2.5 rounded-xl shadow-lg transition text-sm shrink-0 flex items-center gap-2">
+                        ✏ <span id="btn-identity-label">Isi / Ubah Identitas</span>
+                    </button>
+                </div>
+
+                <!-- Display Active Identity Info -->
+                <div id="identity-display-box" class="mt-4 pt-4 border-t border-white/20 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/10">
+                        <span class="text-xs text-yellow-200 block font-semibold uppercase">Nama Lengkap Siswa</span>
+                        <span id="display-nama" class="text-lg font-bold text-white">---</span>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/10">
+                        <span class="text-xs text-yellow-200 block font-semibold uppercase">Kelas</span>
+                        <span id="display-kelas" class="text-lg font-bold text-white">---</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in max-w-5xl mx-auto" style="animation-delay: 0.1s;">
+            <button onclick="nav('screen-materi-1')" class="text-left glass-panel p-6 hover:shadow-xl transition transform hover:-translate-y-2 border-l-4 border-islamic-blue">
+                <div class="bg-blue-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-inner">🌍</div>
+                <h2 class="text-2xl font-bold text-islamic-blue mb-2">Poin 1</h2>
+                <h3 class="text-xl font-semibold mb-2">Kondisi Geologis Indonesia</h3>
+                <p class="text-gray-600 text-sm">Pelajari mengapa Indonesia dilalui 3 lempeng dunia dan 127 gunung api, serta dampak positifnya bagi kita.</p>
+            </button>
+
+            <button onclick="nav('screen-materi-2')" class="text-left glass-panel p-6 hover:shadow-xl transition transform hover:-translate-y-2 border-l-4 border-red-500">
+                <div class="bg-red-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-inner">🌋</div>
+                <h2 class="text-2xl font-bold text-islamic-blue mb-2">Poin 2</h2>
+                <h3 class="text-xl font-semibold mb-2">Potensi Bencana Alam</h3>
+                <p class="text-gray-600 text-sm">Pahami penyebab terjadinya gempa bumi, tsunami, dan letusan gunung berapi akibat kondisi geologis.</p>
+            </button>
+
+            <button onclick="nav('screen-simulasi')" class="text-left glass-panel p-6 hover:shadow-xl transition transform hover:-translate-y-2 border-l-4 border-green-500">
+                <div class="bg-green-100 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-inner">🌽</div>
+                <h2 class="text-2xl font-bold text-islamic-blue mb-2">Lab Virtual</h2>
+                <h3 class="text-xl font-semibold mb-2">Simulasi Agraris Tabongo</h3>
+                <p class="text-gray-600 text-sm">Mainkan simulasi bagaimana aktivitas vulkanik berdampak pada kesuburan tanah pertanian di desa kita.</p>
+            </button>
+
+            <button onclick="startQuizWorkflow()" class="text-left glass-panel p-6 hover:shadow-xl transition transform hover:-translate-y-2 border-l-4 border-islamic-gold bg-gradient-to-br from-white to-yellow-50 relative overflow-hidden">
+                <div class="bg-yellow-200 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-inner">🏆</div>
+                <h2 class="text-2xl font-bold text-islamic-blue mb-2">Evaluasi</h2>
+                <h3 class="text-xl font-semibold mb-2">Kuis Seru Formatif</h3>
+                <p class="text-gray-600 text-sm">Uji pemahamanmu dengan kuis interaktif dan simpan nilaimu ke database guru secara otomatis!</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- Materi 1 Screen -->
+    <div id="screen-materi-1" class="hidden min-h-screen bg-islamic-light p-4 md:p-8 pb-24">
+        <div class="max-w-4xl mx-auto">
+            <button onclick="nav('screen-menu')" class="mb-6 flex items-center text-islamic-blue font-bold hover:underline">
+                ⬅️ Kembali ke Menu
+            </button>
+            <div class="glass-panel p-6 md:p-10 animate-fade-in">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-islamic-blue mb-6 border-b-2 border-islamic-gold pb-4">1. Kondisi Geologis Indonesia</h1>
+                <div class="prose max-w-none text-lg text-gray-700 leading-relaxed">
+                    <p class="mb-4">
+                        <strong>Letak geologis</strong> adalah posisi suatu wilayah yang didasarkan pada struktur geologi atau susunan batuan di sekitarnya. 
+                    </p>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
+                        <p class="font-semibold mb-2">Fakta Penting Lempeng Dunia:</p>
+                        <p>Aktivitas vulkanik yang intens di Indonesia terjadi karena <strong>pertemuan tiga lempeng dunia</strong>:</p>
+                        <ul class="list-disc ml-6 mt-2">
+                            <li>Lempeng <strong>Eurasia</strong> di sebelah utara.</li>
+                            <li>Lempeng <strong>Indo-Australia</strong> di sebelah selatan.</li>
+                            <li>Lempeng <strong>Pasifik</strong> di sebelah timur.</li>
+                        </ul>
+                        <p class="mt-2 text-sm italic">Pertemuan lempeng ini menyebabkan retakan pada kerak bumi, memungkinkan magma naik dan membentuk <strong>127 gunung api aktif</strong> (Sirkum Pasifik & Mediterania).</p>
+                    </div>
+
+                    <h3 class="text-2xl font-bold text-islamic-blue mt-8 mb-4">Dampak Positif Letak Geologis 🌟</h3>
+                    <p class="mb-4">Selain menjadikan wilayah rawan gempa, kondisi ini membawa berkah luar biasa, antara lain:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="bg-green-50 p-4 rounded-xl border border-green-200 shadow-sm">
+                            <h4 class="font-bold text-green-800 text-xl mb-2">🌱 Tanah Super Subur</h4>
+                            <p class="text-base">Banyak mengandung unsur hara dari abu vulkanik. Sangat menguntungkan bagi penduduk yang bermata pencaharian sebagai <strong>petani</strong> (seperti pertanian jagung di Tabongo).</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
+                            <h4 class="font-bold text-gray-800 text-xl mb-2">🪨 Material Bangunan</h4>
+                            <p class="text-base">Pasir dan bebatuan yang dikeluarkan oleh gunung berapi dapat dijual sebagai bahan bangunan berkualitas.</p>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-xl border border-orange-200 shadow-sm">
+                            <h4 class="font-bold text-orange-800 text-xl mb-2">🐅 Keanekaragaman Hayati</h4>
+                            <p class="text-base">Terdapat 3 zona flora & fauna: Tipe Asia (Barat), Tipe Peralihan Endemik (Tengah/Sulawesi), dan Tipe Australia (Timur). Memberi manfaat ekonomi besar.</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-xl border border-purple-200 shadow-sm">
+                            <h4 class="font-bold text-purple-800 text-xl mb-2">💎 Kaya Sumber Daya Mineral</h4>
+                            <p class="text-base">Terdapat minyak bumi, gas alam (untuk LPG), dan batuan metamorf yang mengandung <strong>mineral talk</strong> (sering dimanfaatkan untuk bedak kosmetik).</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-10 text-center">
+                    <button onclick="nav('screen-materi-2')" class="bg-islamic-blue hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-full shadow-lg transition">
+                        Lanjut ke Materi 2 ➡️
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Materi 2 Screen -->
+    <div id="screen-materi-2" class="hidden min-h-screen bg-islamic-light p-4 md:p-8 pb-24">
+        <div class="max-w-4xl mx-auto">
+            <button onclick="nav('screen-menu')" class="mb-6 flex items-center text-islamic-blue font-bold hover:underline">
+                ⬅️ Kembali ke Menu
+            </button>
+            <div class="glass-panel p-6 md:p-10 animate-fade-in">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-islamic-blue mb-6 border-b-2 border-islamic-gold pb-4">2. Potensi Bencana Alam di Indonesia</h1>
+                <p class="text-lg text-gray-700 mb-6">
+                    Kondisi wilayah Indonesia yang berada di antara tiga lempeng tektonik menyebabkan Indonesia sangat rentan terhadap bencana geologi. Berikut adalah 3 ancaman utamanya:
+                </p>
+                <div class="space-y-6">
+                    <div class="bg-white rounded-2xl shadow-md border-l-8 border-yellow-500 p-6 flex flex-col md:flex-row gap-6 items-center">
+                        <div class="text-6xl">🫨</div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">a. Gempa Bumi</h3>
+                            <p class="text-gray-600">
+                                Getaran/guncangan di permukaan bumi akibat tumbukan antarlempeng, patahan aktif, atau aktivitas gunung api. <strong>Bencana ini bersifat tidak dapat diprediksi kapan terjadinya.</strong> Dampaknya meliputi korban jiwa dan kerusakan bangunan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-md border-l-8 border-blue-500 p-6 flex flex-col md:flex-row gap-6 items-center">
+                        <div class="text-6xl">🌊</div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">b. Tsunami</h3>
+                            <p class="text-gray-600">
+                                Rangkaian gelombang laut yang menjalar dengan kecepatan mencapai <strong>900 km/jam</strong>. Disebabkan oleh faktor dasar laut: gempa bumi tektonik, runtuhan, atau letusan gunung api di laut (menurut Yanuarto dkk, 2019).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-md border-l-8 border-red-600 p-6 flex flex-col md:flex-row gap-6 items-center">
+                        <div class="text-6xl">🌋</div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">c. Gunung Meletus (Erupsi)</h3>
+                            <p class="text-gray-600">
+                                Terjadi karena endapan magma didorong keluar oleh gas bertekanan tinggi. Magma bersuhu <strong>>1.000°C</strong>. Lontaran batu dan abu vulkanik dapat melambung hingga radius <strong>18 km</strong> atau lebih.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-10 bg-islamic-blue text-white p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h4 class="font-bold text-xl mb-1">Siap mempraktekkan ilmunya?</h4>
+                        <p class="text-blue-200">Ayo kita lihat bagaimana letusan gunung api berdampak pada lahan pertanian di simulasi interaktif.</p>
+                    </div>
+                    <button onclick="nav('screen-simulasi')" class="bg-islamic-gold hover:bg-yellow-400 text-islamic-blue font-bold py-3 px-6 rounded-full shadow-lg shrink-0 w-full md:w-auto">
+                        Mulai Simulasi 🎮
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Virtual Lab / Simulation Screen -->
+    <div id="screen-simulasi" class="hidden min-h-screen bg-islamic-light p-4 md:p-8 pb-24">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="nav('screen-menu')" class="flex items-center text-islamic-blue font-bold hover:underline">
+                    ⬅️ Menu
+                </button>
+                <h2 class="text-2xl font-bold text-islamic-blue hidden md:block">Lab Virtual Agraris</h2>
+            </div>
+            
+            <div class="glass-panel p-4 md:p-8 flex flex-col shadow-2xl">
+                <div class="mb-6 bg-white p-4 rounded-xl border border-gray-200">
+                    <h3 class="font-bold text-xl mb-2 text-green-700">🧑‍🌾 Petani Jagung Desa Ilomangga, Tabongo</h3>
+                    <p class="text-gray-600 text-sm md:text-base">
+                        Simulasi ini membuktikan Teori Poin 1. 
+                        <strong>Tugasmu:</strong> Tanam jagung, lalu amati apa yang terjadi setelah gunung berapi meletus dan menyebarkan abu vulkaniknya ke tanah (Perubahan struktur kesuburan tanah).
+                    </p>
+                </div>
+
+                <div id="sim-area" class="w-full h-80 md:h-96 rounded-2xl shadow-inner relative flex flex-col justify-end">
+                    <div id="sim-sky" class="absolute top-0 w-full h-3/5">
+                        <div id="sun" class="absolute top-4 right-8 text-5xl transition-opacity duration-1000">☀</div>
+                        <div id="ash-cloud" class="absolute top-0 left-0 w-full h-full bg-gray-800 opacity-0 transition-opacity duration-1000 flex items-center justify-center text-white font-bold text-2xl z-20 pointer-events-none">
+                            Awan Panas & Abu Vulkanik!
+                        </div>
+                    </div>
+                    
+                    <div class="volcano" title="Gunung Api Aktif">🌋</div>
+                    
+                    <div id="sim-ground" class="w-full h-2/5 bg-yellow-600 border-t-8 border-green-600 relative overflow-hidden transition-colors duration-2000 flex items-end justify-around px-10">
+                        <div id="soil-status" class="absolute bottom-2 right-4 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                            Status Tanah: Normal
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap gap-4 justify-center bg-gray-50 p-4 rounded-xl">
+                    <button id="btn-plant" onclick="plantCorn()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md flex items-center gap-2">
+                        🌱 Tanam Jagung
+                    </button>
+                    <button id="btn-erupt" onclick="triggerEruption()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md flex items-center gap-2">
+                        🌋 Simulasikan Erupsi
+                    </button>
+                    <button onclick="resetSimulation()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md flex items-center gap-2">
+                        🔄 Reset Lahan
+                    </button>
+                </div>
+
+                <div id="sim-feedback" class="mt-6 hidden bg-blue-50 border-2 border-blue-400 p-4 rounded-xl text-center animate-fade-in">
+                    <p id="sim-feedback-text" class="text-blue-900 font-medium"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Input/Edit Identitas Siswa -->
+    <div id="modal-identitas" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-fade-in border-2 border-islamic-gold">
+            <div class="text-center mb-6">
+                <span class="text-4xl">📝</span>
+                <h3 class="text-2xl font-bold text-islamic-blue mt-2">Identitas Siswa</h3>
+                <p class="text-gray-500 text-sm">Isi data nama lengkap dan kelas kamu di bawah ini.</p>
+            </div>
+            
+            <form id="form-identitas" onsubmit="saveStudentIdentity(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap Siswa</label>
+                    <input type="text" id="input-nama" required placeholder="Contoh: Ahmad Rizky" class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-islamic-blue focus:outline-none font-medium">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Kelas</label>
+                    <input type="text" id="input-kelas" required placeholder="Contoh: VII-1, 7B, VIII-A, dll." class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-islamic-blue focus:outline-none font-medium">
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeIdentitasModal()" class="w-1/3 py-3 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300">
+                        Batal
+                    </button>
+                    <button type="submit" class="w-2/3 py-3 bg-islamic-gold text-islamic-blue font-black rounded-xl hover:bg-yellow-400 shadow-md">
+                        Simpan Data 💾
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Pengaturan URL Google Apps Script (Untuk Guru) -->
+    <div id="modal-gas" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl animate-fade-in border-2 border-islamic-blue">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="text-xl font-bold text-islamic-blue flex items-center gap-2">⚙️ Pengaturan Database GAS</h3>
+                <button onclick="closeGasModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+            </div>
+            <p class="text-xs text-gray-600 mb-4 leading-relaxed">
+                URL Google Apps Script (GAS) ini terhubung dengan Spreadsheet guru. Saat ini sudah terhubung ke database default.
+            </p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Web App URL (Google Apps Script)</label>
+                    <input type="url" id="input-gas-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-islamic-blue focus:outline-none text-sm">
+                </div>
+                <div id="gas-status-msg" class="text-xs hidden p-3 rounded-lg"></div>
+                <div class="flex gap-2 justify-end">
+                    <button onclick="saveGasUrl()" class="px-5 py-2.5 bg-islamic-blue text-white font-bold rounded-xl hover:bg-blue-800 shadow">
+                        Simpan Pengaturan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Loading State -->
+    <div id="screen-loading-kuis" class="hidden min-h-screen bg-islamic-light p-4 md:p-8 flex items-center justify-center">
+        <div class="text-center bg-white p-10 rounded-2xl shadow-xl border-2 border-islamic-gold">
+            <div class="loader mb-4"></div>
+            <h2 class="text-xl font-bold text-islamic-blue">Memuat Soal dari Database...</h2>
+            <p class="text-gray-500 text-sm mt-2">Mohon tunggu sebentar.</p>
+        </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="screen-kuis" class="hidden min-h-screen bg-islamic-light p-4 md:p-8 pb-24">
+        <div class="max-w-3xl mx-auto">
+            <button onclick="nav('screen-menu')" class="mb-6 flex items-center text-islamic-blue font-bold hover:underline">
+                ⬅️ Kembali ke Menu
+            </button>
+            
+            <div class="glass-panel p-6 md:p-10">
+                <div class="flex justify-between items-end border-b-2 border-gray-200 pb-4 mb-6">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-extrabold text-islamic-blue">Kuis Evaluasi Formatif</h1>
+                        <p class="text-gray-500 text-sm mt-1" id="quiz-student-badge">Siswa: - | Kelas: -</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-xs text-gray-500 uppercase tracking-wide">Soal</span>
+                        <span id="quiz-progress" class="text-2xl font-bold text-islamic-gold">1/5</span>
+                    </div>
+                </div>
+
+                <div id="quiz-container" class="animate-fade-in">
+                    <p id="quiz-subtitle" class="text-xs font-bold text-islamic-blue uppercase tracking-wider mb-2"></p>
+                    <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-gray-800 mb-6 leading-snug">
+                        Memuat Pertanyaan...
+                    </h2>
+                    
+                    <div id="options-container" class="space-y-3">
+                        <!-- Options injected via JS -->
+                    </div>
+                </div>
+
+                <div id="quiz-feedback" class="hidden mt-6 p-5 rounded-xl animate-fade-in">
+                    <h3 id="feedback-title" class="font-bold text-lg mb-2"></h3>
+                    <p id="feedback-desc" class="text-gray-700"></p>
+                    <button id="btn-next-quiz" onclick="nextQuestion()" class="mt-4 bg-islamic-blue hover:bg-blue-800 text-white font-bold py-2 px-6 rounded-lg w-full md:w-auto">
+                        Lanjut Soal Berikutnya ➡
+                    </button>
+                </div>
+
+                <div id="quiz-result" class="hidden text-center animate-fade-in py-10">
+                    <div class="text-6xl mb-4" id="result-emoji">🏆</div>
+                    <h2 class="text-3xl font-bold text-islamic-blue mb-2">Kuis Selesai!</h2>
+                    <p id="result-student-info" class="text-gray-600 font-semibold mb-2"></p>
+                    <p class="text-gray-500 text-sm mb-4">Skor Akhir Kamu:</p>
+                    <div class="text-6xl font-extrabold text-islamic-gold mb-6 drop-shadow-md" id="result-score">0</div>
+                    
+                    <p id="result-message" class="text-lg font-medium text-gray-700 mb-6 max-w-md mx-auto"></p>
+
+                    <!-- Status Pengiriman Ke Spreadsheet -->
+                    <div id="save-status-box" class="max-w-md mx-auto mb-8 p-4 rounded-xl text-sm font-medium border bg-blue-50 border-blue-200 text-blue-800 flex items-center justify-center gap-2">
+                        <span class="loader" style="width: 20px; height: 20px; border-width: 3px;"></span> Menyimpan hasil ke database...
+                    </div>
+
+                    <div class="flex flex-col md:flex-row justify-center gap-4">
+                        <button onclick="startQuizWorkflow()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg shadow transition">
+                            Ulangi Kuis 🔄
+                        </button>
+                        <button onclick="nav('screen-menu')" class="bg-islamic-gold hover:bg-yellow-400 text-islamic-blue font-bold py-3 px-6 rounded-lg shadow-lg transition">
+                            Kembali ke Menu Utama 🏠
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Bawaan (Akan digunakan jika database gagal ditarik atau kosong)
+        const defaultQuizData = [
+            {
+                type: "multiple-choice",
+                question: "1. Faktor utama yang menyebabkan Indonesia memiliki sebanyak 127 gunung api aktif adalah...",
+                options: [
+                    "Terletak di garis khatulistiwa yang bersuhu panas",
+                    "Pertemuan tiga lempeng tektonik dunia",
+                    "Banyaknya laut di sekitar Indonesia",
+                    "Adanya perubahan iklim global yang ekstrim"
+                ],
+                correctIndex: 1,
+                explanation: "Tepat! Aktivitas vulkanik intens terjadi karena Indonesia merupakan titik pertemuan Lempeng Eurasia, Indo-Australia, dan Pasifik yang memicu naiknya magma."
+            },
+            {
+                type: "true-false",
+                question: "2. Pernyataan Benar atau Salah: Letusan gunung berapi dapat memberikan dampak positif, salah satunya adalah abu vulkanik yang membuat tanah menjadi sangat subur untuk lahan pertanian.",
+                options: ["Benar", "Salah"],
+                correctIndex: 0,
+                explanation: "Benar sekali. Meskipun rawan bencana, material vulkanik seperti abu dari letusan gunung api memberikan unsur hara berlimpah yang membuat tanah menjadi super subur."
+            },
+            {
+                type: "multiple-choice",
+                question: "3. Bencana tsunami tidak dapat terjadi begitu saja. Berdasarkan materi, tsunami dapat dipicu oleh faktor geologi di dasar laut berikut, KECUALI...",
+                options: [
+                    "Gempa bumi dangkal di dasar laut",
+                    "Runtuhan tebing atau material di dasar laut",
+                    "Angin badai yang sangat kencang di permukaan laut",
+                    "Letusan gunung api purba di tengah laut"
+                ],
+                correctIndex: 2,
+                explanation: "Tepat! Angin badai memicu gelombang tinggi (ombak badai), tetapi TSUNAMI secara spesifik dipicu oleh gangguan struktur geologis di DASAR laut (gempa, longsor, letusan)."
+            },
+            {
+                type: "true-false",
+                question: "4. Pernyataan Benar atau Salah: Gempa bumi tektonik dapat diprediksi secara pasti kapan waktu terjadinya menggunakan teknologi masa kini.",
+                options: ["Benar", "Salah"],
+                correctIndex: 1,
+                explanation: "Salah. Hingga saat ini, belum ada teknologi yang bisa memprediksi kapan waktu pasti gempa bumi akan terjadi. Oleh karena itu, kesiapsiagaan diri (mitigasi) sangatlah penting!"
+            },
+            {
+                type: "matching",
+                question: "5. Pasangkan istilah bencana alam dan geologi di kolom KIRI dengan penjelasannya yang tepat di kolom KANAN! (Klik istilah di kiri, lalu klik pasangannya di kanan)",
+                pairs: [
+                    { id: "p1", left: "Tsunami", right: "Rangkaian gelombang laut besar akibat pergeseran di dasar laut" },
+                    { id: "p2", left: "Magma", right: "Cairan pijar panas bersuhu >1.000°C di dalam perut bumi" },
+                    { id: "p3", left: "Letak Geologis", right: "Posisi wilayah berdasarkan struktur susunan batuan di sekitarnya" }
+                ],
+                explanation: "Kerja bagus! Tsunami berhubungan dengan gelombang akibat gempa laut, Magma adalah cairan panas inti bumi, dan Letak Geologis merujuk pada struktur bebatuan."
+            }
+        ];
+
+        let quizData = [...defaultQuizData];
+
+        // System State
+        let studentInfo = { nama: '', kelas: '' };
+        let studentAnswers = []; 
+        let currentQuestion = 0;
+        let score = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let hasAnswered = false;
+        let startTime = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStudentIdentityFromStorage();
+        });
+
+        function loadStudentIdentityFromStorage() {
+            const savedNama = localStorage.getItem('mpi_student_nama') || '';
+            const savedKelas = localStorage.getItem('mpi_student_kelas') || '';
+            
+            studentInfo = { nama: savedNama, kelas: savedKelas };
+            updateIdentityUI();
+        }
+
+        function updateIdentityUI() {
+            const displayNama = document.getElementById('display-nama');
+            const displayKelas = document.getElementById('display-kelas');
+            const badgeText = document.getElementById('badge-text');
+            const btnIdentityLabel = document.getElementById('btn-identity-label');
+
+            if (studentInfo.nama && studentInfo.kelas) {
+                displayNama.innerText = studentInfo.nama;
+                displayKelas.innerText = studentInfo.kelas;
+                badgeText.innerText = `${studentInfo.nama} (${studentInfo.kelas})`;
+                btnIdentityLabel.innerText = "Ubah Identitas";
+            } else {
+                displayNama.innerText = "Belum diisi (Klik Ubah Identitas)";
+                displayKelas.innerText = "-";
+                badgeText.innerText = "Siswa: Belum Diisi";
+                btnIdentityLabel.innerText = "Isi Identitas";
+            }
+        }
+
+        // FUNGSI UTAMA PENAUTAN URL GOOGLE APPS SCRIPT
+        function getGasUrl() {
+            // URL Tautan Default (Spreadsheet Anda)
+            const defaultUrl = 'https://script.google.com/macros/s/AKfycbzXkZe7z3tZP81nidztqIzr4Ksfq1R74EaVcK127XDEJeOAXQaZPqh2MFb3uaav34ha/exec';
+            
+            // Cek apakah ada URL modifikasi tersimpan di localStorage, jika tidak, gunakan URL Default
+            return localStorage.getItem('gas_web_app_url') || defaultUrl;
+        }
+
+        function openGasModal() {
+            document.getElementById('input-gas-url').value = getGasUrl();
+            document.getElementById('modal-gas').classList.remove('hidden');
+        }
+
+        function closeGasModal() {
+            document.getElementById('modal-gas').classList.add('hidden');
+        }
+
+        function saveGasUrl() {
+            const url = document.getElementById('input-gas-url').value.trim();
+            localStorage.setItem('gas_web_app_url', url);
+            const msg = document.getElementById('gas-status-msg');
+            msg.className = "text-xs p-3 rounded-lg bg-green-100 text-green-800 font-medium";
+            msg.innerText = "✅ URL Google Apps Script berhasil disimpan!";
+            msg.classList.remove('hidden');
+            setTimeout(() => {
+                msg.classList.add('hidden');
+                closeGasModal();
+            }, 1200);
+        }
+
+        function openIdentitasModal() {
+            document.getElementById('input-nama').value = studentInfo.nama || '';
+            document.getElementById('input-kelas').value = studentInfo.kelas || '';
+            document.getElementById('modal-identitas').classList.remove('hidden');
+        }
+
+        function closeIdentitasModal() {
+            document.getElementById('modal-identitas').classList.add('hidden');
+        }
+
+        function saveStudentIdentity(e) {
+            e.preventDefault();
+            const nama = document.getElementById('input-nama').value.trim();
+            const kelas = document.getElementById('input-kelas').value.trim();
+            
+            if(!nama || !kelas) return;
+            
+            studentInfo = { nama, kelas };
+            localStorage.setItem('mpi_student_nama', nama);
+            localStorage.setItem('mpi_student_kelas', kelas);
+
+            updateIdentityUI();
+            closeIdentitasModal();
+        }
+
+        function startQuizWorkflow() {
+            if (!studentInfo.nama || !studentInfo.kelas) {
+                openIdentitasModal();
+            } else {
+                fetchQuestionsAndStart();
+            }
+        }
+
+        function nav(targetId) {
+            const screens = ['screen-cover', 'screen-menu', 'screen-materi-1', 'screen-materi-2', 'screen-simulasi', 'screen-kuis', 'screen-loading-kuis'];
+            screens.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            const target = document.getElementById(targetId);
+            if(target) target.classList.remove('hidden');
+            window.scrollTo(0, 0);
+
+            if(targetId === 'screen-simulasi') resetSimulation();
+        }
+
+        async function fetchQuestionsAndStart() {
+            const gasUrl = getGasUrl();
+            nav('screen-loading-kuis'); 
+            
+            if (gasUrl) {
+                try {
+                    const response = await fetch(gasUrl + '?action=getSoal');
+                    const data = await response.json();
+                    
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        quizData = data; 
+                    } else {
+                        quizData = [...defaultQuizData]; 
+                    }
+                } catch(err) {
+                    console.warn("Gagal menarik soal dari Database. Menggunakan soal bawaan sistem.", err);
+                    quizData = [...defaultQuizData];
+                }
+            } else {
+                quizData = [...defaultQuizData];
+            }
+            
+            setTimeout(() => {
+                nav('screen-kuis');
+                initQuiz();
+            }, 500);
+        }
+
+        let soilFertility = 1;
+        let isErupting = false;
+        let cropElements = [];
+
+        function plantCorn() {
+            if(isErupting) return alert("Tunggu! Gunung sedang erupsi, bahaya untuk bertani!");
+            
+            const ground = document.getElementById('sim-ground');
+            const feedback = document.getElementById('sim-feedback');
+            const feedbackText = document.getElementById('sim-feedback-text');
+            
+            if(cropElements.length >= 6) {
+                cropElements.forEach(el => el.remove());
+                cropElements = [];
+            }
+
+            const crop = document.createElement('div');
+            crop.className = 'crop animate-fade-in';
+            
+            if (soilFertility === 1) {
+                crop.innerHTML = '🌱';
+                crop.style.fontSize = '2rem';
+                crop.title = "Pertumbuhan lambat (Tanah Biasa)";
+                feedbackText.innerHTML = "Tanah biasa. Jagung tumbuh perlahan. <strong>Coba simulasikan erupsi!</strong>";
+            } else {
+                crop.innerHTML = '🌽';
+                crop.style.fontSize = '4rem';
+                crop.title = "Pertumbuhan sangat cepat (Tanah Subur Vulkanik)";
+                crop.classList.add('animate-bounce');
+                feedbackText.innerHTML = "Luar biasa! Berkat abu vulkanik, tanah kaya akan <strong>unsur hara</strong>. Jagung tumbuh sangat subur dan siap panen lebat!";
+            }
+
+            ground.appendChild(crop);
+            cropElements.push(crop);
+            feedback.classList.remove('hidden');
+        }
+
+        function triggerEruption() {
+            if(isErupting) return;
+            isErupting = true;
+            
+            const simArea = document.getElementById('sim-area');
+            const ground = document.getElementById('sim-ground');
+            const ashCloud = document.getElementById('ash-cloud');
+            const sun = document.getElementById('sun');
+            const feedback = document.getElementById('sim-feedback');
+            const feedbackText = document.getElementById('sim-feedback-text');
+
+            simArea.classList.add('animate-shake');
+            feedback.classList.remove('hidden');
+            feedbackText.innerHTML = "⚠️ <strong>GEMPA VULKANIK!</strong> Gunung meletus mengeluarkan material magma dan abu!";
+            
+            cropElements.forEach(el => {
+                el.innerHTML = '🥀';
+                el.style.filter = "grayscale(100%) brightness(50%)";
+            });
+
+            setTimeout(() => {
+                ashCloud.style.opacity = '0.9';
+                sun.style.opacity = '0';
+                for(let i=0; i<20; i++){
+                    let ash = document.createElement('div');
+                    ash.className = 'ash-particle';
+                    ash.style.left = Math.random() * 100 + '%';
+                    ash.style.animationDelay = Math.random() * 2 + 's';
+                    simArea.appendChild(ash);
+                    setTimeout(()=> ash.remove(), 3000);
+                }
+            }, 1000);
+
+            setTimeout(() => {
+                simArea.classList.remove('animate-shake');
+                ashCloud.style.opacity = '0';
+                sun.style.opacity = '1';
+                ground.classList.remove('bg-yellow-600', 'border-green-600');
+                ground.classList.add('bg-stone-800', 'border-stone-900');
+                
+                soilFertility = 2;
+                document.getElementById('soil-status').innerText = "Status Tanah: Sangat Subur (Kaya Unsur Hara)";
+                document.getElementById('soil-status').classList.replace('bg-black', 'bg-green-700');
+
+                cropElements.forEach(el => el.remove());
+                cropElements = [];
+
+                feedbackText.innerHTML = "✅ Erupsi selesai. Abu vulkanik telah mengendap dan menjadikan <strong>tanah sangat subur</strong>. Coba klik 'Tanam Jagung' sekarang!";
+                isErupting = false;
+            }, 4000);
+        }
+
+        function resetSimulation() {
+            const ground = document.getElementById('sim-ground');
+            const feedback = document.getElementById('sim-feedback');
+            
+            soilFertility = 1;
+            isErupting = false;
+            cropElements.forEach(el => el.remove());
+            cropElements = [];
+            
+            ground.className = "w-full h-2/5 bg-yellow-600 border-t-8 border-green-600 relative overflow-hidden transition-colors duration-1000 flex items-end justify-around px-10";
+            document.getElementById('soil-status').innerText = "Status Tanah: Normal";
+            document.getElementById('soil-status').classList.replace('bg-green-700', 'bg-black');
+            document.getElementById('ash-cloud').style.opacity = '0';
+            document.getElementById('sun').style.opacity = '1';
+            feedback.classList.add('hidden');
+        }
+
+        function initQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            studentAnswers = [];
+            startTime = new Date();
+
+            document.getElementById('quiz-student-badge').innerText = `Siswa: ${studentInfo.nama || 'Anonim'} | Kelas: ${studentInfo.kelas || '-'}`;
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('quiz-result').classList.add('hidden');
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            hasAnswered = false;
+            const q = quizData[currentQuestion];
+            
+            document.getElementById('quiz-progress').innerText = `${currentQuestion + 1}/${quizData.length}`;
+            document.getElementById('question-text').innerText = q.question;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            document.getElementById('quiz-feedback').classList.add('hidden');
+
+            if (q.type === 'multiple-choice' || q.type === 'true-false') {
+                document.getElementById('quiz-subtitle').innerText = (q.type === 'true-false') ? "Soal Benar / Salah" : "Pilihan Ganda";
+                
+                q.options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left p-4 rounded-xl border-2 border-gray-200 bg-white hover:border-islamic-blue hover:bg-blue-50 transition font-medium text-gray-700';
+                    
+                    const icon = q.type === 'true-false' ? (index === 0 ? '✔️' : '❌') : String.fromCharCode(65 + index);
+                    btn.innerHTML = `<span class="inline-block w-8 h-8 bg-gray-100 text-center rounded-full leading-8 mr-3 font-bold">${icon}</span> ${opt}`;
+                    
+                    btn.onclick = () => checkAnswer(index, btn, opt);
+                    optionsContainer.appendChild(btn);
+                });
+            } 
+            else if (q.type === 'matching') {
+                document.getElementById('quiz-subtitle').innerText = "Soal Menyilangkan (Pasangkan Kiri & Kanan)";
+                
+                const matchingContainer = document.createElement('div');
+                matchingContainer.className = 'grid grid-cols-1 md:grid-cols-2 gap-6 mt-4';
+                
+                let leftItems = q.pairs.map(p => ({ id: p.id, text: p.left }));
+                let rightItems = q.pairs.map(p => ({ id: p.id, text: p.right })).sort(() => Math.random() - 0.5);
+
+                let leftCol = document.createElement('div');
+                leftCol.className = 'flex flex-col gap-3';
+                let rightCol = document.createElement('div');
+                rightCol.className = 'flex flex-col gap-3';
+
+                let selectedLeft = null;
+                let selectedRight = null;
+                let matchesFound = 0;
+
+                const evaluateMatch = () => {
+                    if(selectedLeft && selectedRight) {
+                        if(selectedLeft.dataset.id === selectedRight.dataset.id) {
+                            selectedLeft.classList.remove('match-btn-selected');
+                            selectedRight.classList.remove('match-btn-selected');
+                            selectedLeft.classList.add('match-btn-correct');
+                            selectedRight.classList.add('match-btn-correct');
+                            selectedLeft.innerHTML += ' ✅';
+                            selectedRight.innerHTML += ' ✅';
+                            
+                            selectedLeft.disabled = true;
+                            selectedRight.disabled = true;
+                            matchesFound++;
+                            selectedLeft = null;
+                            selectedRight = null;
+
+                            if(matchesFound === q.pairs.length) {
+                                hasAnswered = true;
+                                score += Math.round(100 / quizData.length);
+                                correctCount++;
+                                studentAnswers.push({
+                                    no: currentQuestion + 1,
+                                    soal: q.question,
+                                    jawaban: "Berhasil memasangkan seluruh opsi dengan benar",
+                                    status: "BENAR"
+                                });
+                                showFeedback(true, "✨ Luar Biasa! Semua Pasangan Benar.", q.explanation);
+                            }
+                        } else {
+                            selectedLeft.classList.replace('match-btn-selected', 'match-btn-wrong');
+                            selectedRight.classList.replace('match-btn-selected', 'match-btn-wrong');
+                            
+                            setTimeout(() => {
+                                selectedLeft.classList.remove('match-btn-wrong');
+                                selectedRight.classList.remove('match-btn-wrong');
+                                selectedLeft = null;
+                                selectedRight = null;
+                            }, 600);
+                        }
+                    }
+                };
+
+                leftItems.forEach((item, idx) => {
+                    let btn = document.createElement('button');
+                    btn.className = 'p-4 rounded-xl border-2 border-gray-200 bg-white font-bold text-islamic-blue text-left transition hover:bg-gray-50';
+                    btn.innerHTML = `<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">${idx+1}</span> ${item.text}`;
+                    btn.dataset.id = item.id;
+                    btn.onclick = () => {
+                        if(btn.disabled) return;
+                        if(selectedLeft) selectedLeft.classList.remove('match-btn-selected');
+                        selectedLeft = btn;
+                        btn.classList.add('match-btn-selected');
+                        evaluateMatch();
+                    };
+                    leftCol.appendChild(btn);
+                });
+
+                rightItems.forEach((item, idx) => {
+                    let btn = document.createElement('button');
+                    btn.className = 'p-4 rounded-xl border-2 border-gray-200 bg-white font-medium text-gray-700 text-left transition hover:bg-gray-50 text-sm';
+                    btn.innerHTML = item.text;
+                    btn.dataset.id = item.id;
+                    btn.onclick = () => {
+                        if(btn.disabled) return;
+                        if(selectedRight) selectedRight.classList.remove('match-btn-selected');
+                        selectedRight = btn;
+                        btn.classList.add('match-btn-selected');
+                        evaluateMatch();
+                    };
+                    rightCol.appendChild(btn);
+                });
+
+                matchingContainer.appendChild(leftCol);
+                matchingContainer.appendChild(rightCol);
+                optionsContainer.appendChild(matchingContainer);
+            }
+        }
+
+        function checkAnswer(selectedIndex, selectedBtn, selectedOptionText) {
+            if (hasAnswered) return;
+            hasAnswered = true;
+            
+            const q = quizData[currentQuestion];
+            const isCorrect = selectedIndex === q.correctIndex;
+            
+            const allBtns = document.getElementById('options-container').querySelectorAll('button');
+            allBtns.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === q.correctIndex) {
+                    btn.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+                } else if (idx === selectedIndex && !isCorrect) {
+                    btn.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
+                }
+            });
+
+            if (isCorrect) {
+                score += Math.round(100 / quizData.length);
+                correctCount++;
+                studentAnswers.push({
+                    no: currentQuestion + 1,
+                    soal: q.question,
+                    jawaban: selectedOptionText,
+                    status: "BENAR"
+                });
+                showFeedback(true, "🎉 Jawabanmu Tepat Sekali!", q.explanation);
+            } else {
+                wrongCount++;
+                studentAnswers.push({
+                    no: currentQuestion + 1,
+                    soal: q.question,
+                    jawaban: selectedOptionText,
+                    status: "SALAH"
+                });
+                showFeedback(false, "❌ Yah, Jawaban Belum Tepat.", q.explanation);
+            }
+        }
+
+        function showFeedback(isCorrect, title, desc) {
+            const feedbackBox = document.getElementById('quiz-feedback');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackDesc = document.getElementById('feedback-desc');
+            
+            feedbackBox.className = `mt-6 p-5 rounded-xl animate-fade-in ${isCorrect ? 'bg-green-50 border-2 border-green-400 text-green-900' : 'bg-red-50 border-2 border-red-400 text-red-900'}`;
+            feedbackTitle.innerText = title;
+            feedbackDesc.innerText = desc;
+            feedbackBox.classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        async function finishQuiz() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            document.getElementById('quiz-result').classList.remove('hidden');
+
+            if (score > 100) score = 100;
+            if (correctCount === quizData.length) score = 100; // Pastikan skor bulat 100 jika semua benar
+
+            document.getElementById('result-score').innerText = score;
+            document.getElementById('result-student-info').innerText = `${studentInfo.nama} (${studentInfo.kelas})`;
+
+            const msg = document.getElementById('result-message');
+            const emoji = document.getElementById('result-emoji');
+
+            if (score >= 80) {
+                emoji.innerText = '🥇';
+                msg.innerText = "Luar biasa! Kamu sangat menguasai materi Potensi Bencana Alam Indonesia.";
+            } else if (score >= 60) {
+                emoji.innerText = '🥈';
+                msg.innerText = "Bagus! Kamu sudah memahami sebagian besar materi. Tetap tingkatkan belajarmu ya!";
+            } else {
+                emoji.innerText = '🥉';
+                msg.innerText = "Jangan berkecil hati! Pelajari kembali materi di menu utama dan coba kuis ini lagi.";
+            }
+
+            await sendResultToGAS();
+        }
+
+        async function sendResultToGAS() {
+            const statusBox = document.getElementById('save-status-box');
+            const gasUrl = getGasUrl();
+
+            if (!gasUrl) {
+                statusBox.className = "max-w-md mx-auto mb-8 p-4 rounded-xl text-sm font-medium border bg-amber-50 border-amber-300 text-amber-800 flex items-center justify-center gap-2";
+                statusBox.innerHTML = '⚠️ Database belum diatur. Nilai tidak dikirim (Hanya tersimpan di layar).';
+                return;
+            }
+
+            statusBox.className = "max-w-md mx-auto mb-8 p-4 rounded-xl text-sm font-medium border bg-blue-50 border-blue-200 text-blue-800 flex items-center justify-center gap-2";
+            statusBox.innerHTML = '<span class="loader" style="width: 20px; height: 20px; border-width: 3px;"></span> Mengirim nilai ke Google Spreadsheet...';
+
+            const durationSeconds = Math.round((new Date() - startTime) / 1000);
+            
+            // Format Data
+            const payload = {
+                action: 'saveResult',
+                timestamp: new Date().toLocaleString('id-ID'),
+                nama: studentInfo.nama,
+                kelas: studentInfo.kelas,
+                skor: score,
+                benar: correctCount,
+                salah: wrongCount,
+                totalSoal: quizData.length,
+                durasiDetik: durationSeconds,
+                detailJawaban: studentAnswers
+            };
+
+            try {
+                // Mengirim payload JSON via POST ke Google Apps Script
+                await fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // Penting agar tidak kena blokir CORS di browser client
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                // Karena no-cors, kita tidak bisa membaca response. Asumsikan berhasil jika fetch tidak melempar error.
+                statusBox.className = "max-w-md mx-auto mb-8 p-4 rounded-xl text-sm font-medium border bg-green-50 border-green-300 text-green-800 flex items-center justify-center gap-2";
+                statusBox.innerHTML = '✅ Nilai dan evaluasi berhasil tersimpan ke Google Spreadsheet!';
+            } catch (err) {
+                console.error("Error sending to GAS:", err);
+                statusBox.className = "max-w-md mx-auto mb-8 p-4 rounded-xl text-sm font-medium border bg-red-50 border-red-300 text-red-800 flex items-center justify-center gap-2";
+                statusBox.innerHTML = '❌ Gagal mengirim nilai. Pastikan koneksi internet stabil.';
+            }
+        }
+    </script>
+</body>
+</html>
